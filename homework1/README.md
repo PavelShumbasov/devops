@@ -24,9 +24,8 @@
 
 ## Демонстрация работы
 
-![img.png](img.png)
-![img_1.png](img_1.png)
-![img_3.png](img_3.png)
+![image](https://github.com/PavelShumbasov/devops/assets/80177277/07c97f13-ad08-4e09-9f13-15d8d5de81a9)
+![image](https://github.com/PavelShumbasov/devops/assets/80177277/b23f1312-1759-4274-94f3-4af86c1938a6)
 
-![img_2.png](img_2.png)
+
 
