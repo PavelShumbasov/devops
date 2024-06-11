@@ -1,5 +1,10 @@
 #!/bin/bash
 
+log() {
+  message="$1"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" | tee -a "$log_file"
+}
+
 while getopts ":d:" opt; do
   case $opt in
     d)
@@ -27,13 +32,32 @@ users=$(getent passwd | cut -d: -f1)
 
 for user in $users; do
   user_dir="$root_dir/$user"
-  mkdir -p "$user_dir"
 
-  chmod 755 "$user_dir"
+  if [ ! -d "$user_dir" ]; then
+    mkdir -p "$user_dir"
 
-  chown "$user:$user" "$user_dir"
+    if [ $? -eq 0 ]; then
+      chmod 755 "$user_dir"
 
-  echo "$(date '+%Y-%m-%d %H:%M:%S') - Создана директория для пользователя $user: $user_dir" | tee -a "$log_file"
+      group=$(getent passwd "$user" | cut -d: -f4)
+      group_name=$(getent group "$group" | cut -d: -f1)
+
+      if [ -n "$group_name" ]; then
+        chown "$user:$group_name" "$user_dir"
+        if [ $? -eq 0 ]; then
+          log "Создана директория для пользователя $user: $user_dir"
+        else
+          log "Ошибка при назначении прав для пользователя $user: $user_dir"
+        fi
+      else
+        log "Группа для пользователя $user не найдена: $user_dir"
+      fi
+    else
+      log "Ошибка при создании директории для пользователя $user: $user_dir"
+    fi
+  else
+    log "Директория для пользователя $user уже существует: $user_dir"
+  fi
 done
 
 echo "Все директории созданы и права установлены."
