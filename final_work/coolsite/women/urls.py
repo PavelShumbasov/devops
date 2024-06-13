@@ -1,7 +1,12 @@
 from django.urls import path, re_path
-from django.views.decorators.cache import cache_page
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from .views import *
+
+
+def prometheus_view(request):
+    return HttpResponse(generate_latest(), content_type=CONTENT_TYPE_LATEST)
+
 
 urlpatterns = [
     path('', WomenHome.as_view(), name='home'),
@@ -13,5 +18,6 @@ urlpatterns = [
     path('register/', RegisterUser.as_view(), name='register'),
     path('post/<slug:post_slug>', ShowPost.as_view(), name='post'),
     path('category/<slug:cat_slug>/', WomenCategory.as_view(), name='category'),
-    re_path(r'^archive/(?P<year>[0-9]{4})/', archive)
+    re_path(r'^archive/(?P<year>[0-9]{4})/', archive),
+    path('metrics', prometheus_view),
 ]

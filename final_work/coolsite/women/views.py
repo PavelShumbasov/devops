@@ -10,9 +10,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import *
 from .utils import *
 
+from prometheus_client import Counter
+
+REQUEST_COUNTER = Counter('django_requests_total', 'Total number of requests to Django views')
+PAGE_VIEW_COUNTER = Counter('django_page_views_total', 'Total number of page views in Django views')
+
 
 class WomenHome(DataMixin, ListView):
-    model = Women  # Подключаем модель. Выбирает все записи из таблицы и пытается их отобразить в виде списка
+    model = Women
     template_name = 'women/index.html'
     context_object_name = 'posts'
 
@@ -23,39 +28,26 @@ class WomenHome(DataMixin, ListView):
         return context
 
     def get_queryset(self):
+        # Увеличиваем счетчик при каждом запросе на этот вид
+        REQUEST_COUNTER.inc()
         return Women.objects.filter(is_published=True).select_related('cat')
 
 
-# def index(request):
-#     posts = Women.objects.all()
-#     context = {
-#         'posts': posts,
-#         'menu': menu,
-#         'title': 'Главная страница',
-#         'cat_selected': 0,
-#     }
-#     return render(request, 'women/index.html', context=context)
-
 def about(request):
+    # Увеличиваем счетчик при каждом запросе на этот вид
+    REQUEST_COUNTER.inc()
+
     contact_list = Women.objects.all()
     paginator = Paginator(contact_list, 3)
 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Увеличиваем счетчик при каждом просмотре страницы "О сайте"
+    PAGE_VIEW_COUNTER.inc()
+
     return render(request, 'women/about.html', {'page_obj': page_obj, 'menu': menu, 'title': 'О сайте'})
 
-
-# def addpage(request):
-#     if request.method == "POST":
-#         form = AddPostForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             # print(form.cleaned_data)
-#             form.save()
-#             return redirect('home')
-#     else:
-#         form = AddPostForm()
-#     return render(request, 'women/addpage.html', {'form': form, "menu": menu, "title": "Добавление статьи"})
 
 class AddPage(LoginRequiredMixin, DataMixin, CreateView):
     form_class = AddPostForm
@@ -68,9 +60,6 @@ class AddPage(LoginRequiredMixin, DataMixin, CreateView):
         context = dict(list(context.items()) + list(c_def.items()))
         return context
 
-
-# def contact(request):
-#     return HttpResponse("Обратная связь")
 
 class ContactFormView(DataMixin, FormView):
     form_class = ContactForm
@@ -87,23 +76,6 @@ class ContactFormView(DataMixin, FormView):
         return redirect('home')
 
 
-# def login(request):
-#     return HttpResponse("Авторизация")
-
-
-# def show_post(request, post_slug):
-#     post = get_object_or_404(Women, slug=post_slug)
-#
-#     context = {
-#         'post': post,
-#         'menu': menu,
-#         'title': post.title,
-#         'cat_selected': post.cat_id,
-#     }
-#
-#     return render(request, 'women/post.html', context=context)
-
-
 class ShowPost(DataMixin, DetailView):
     model = Women
     template_name = 'women/post.html'
@@ -116,20 +88,6 @@ class ShowPost(DataMixin, DetailView):
         context = dict(list(context.items()) + list(c_def.items()))
         return context
 
-
-# def show_category(request, cat_id):
-#     posts = Women.objects.filter(cat_id=cat_id)
-#
-#     if len(posts) == 0:
-#         raise Http404()
-#
-#     context = {
-#         'posts': posts,
-#         'menu': menu,
-#         'title': 'Отображение по рубрикам',
-#         'cat_selected': cat_id,
-#     }
-#     return render(request, 'women/index.html', context=context)
 
 class WomenCategory(DataMixin, ListView):
     model = Women
